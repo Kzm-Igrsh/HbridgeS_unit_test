@@ -39,6 +39,7 @@ void loop() {
   // Button A: PWM0=50, PWM1=0 (Forward)
   if (M5.BtnA.wasPressed()) {
     M5.Display.clear();
+    M5.Display.setCursor(0, 0);
     M5.Display.setTextSize(2);
     M5.Display.println("Forward");
     M5.Display.println("");
@@ -52,6 +53,7 @@ void loop() {
   // Button B: PWM0=0, PWM1=50 (Reverse)
   if (M5.BtnB.wasPressed()) {
     M5.Display.clear();
+    M5.Display.setCursor(0, 0);
     M5.Display.setTextSize(2);
     M5.Display.println("Reverse");
     M5.Display.println("");
@@ -65,6 +67,7 @@ void loop() {
   // Button C: PWM0=0, PWM1=0 (Stop)
   if (M5.BtnC.wasPressed()) {
     M5.Display.clear();
+    M5.Display.setCursor(0, 0);
     M5.Display.setTextSize(2);
     M5.Display.println("Stop");
     M5.Display.println("");

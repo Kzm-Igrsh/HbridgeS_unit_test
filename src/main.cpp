@@ -58,10 +58,10 @@ void loop() {
     M5.Display.println("Reverse");
     M5.Display.println("");
     M5.Display.println("PWM0: 0");
-    M5.Display.println("PWM1: 50");
+    M5.Display.println("PWM1: 250");
     
     ledcWrite(PWM0_CH, 0);
-    ledcWrite(PWM1_CH, 50);
+    ledcWrite(PWM1_CH, 250);
   }
   
   // Button C: PWM0=0, PWM1=0 (Stop)

@@ -18,7 +18,10 @@ enum Mode {
 };
 
 Mode currentMode = MODE_STOP;
-int powerValue = 0;  // 0-255
+
+// 各モードごとのパワー値を保持
+int forwardPower = 0;   // Forward時のパワー
+int reversePower = 0;   // Reverse時のパワー
 
 void updateDisplay() {
   M5.Display.clear();
@@ -29,45 +32,53 @@ void updateDisplay() {
   switch(currentMode) {
     case MODE_FORWARD:
       M5.Display.println("Forward");
+      M5.Display.println("");
+      M5.Display.printf("Power: %d\n", forwardPower);
+      M5.Display.println("");
+      M5.Display.printf("PWM0: %d\n", forwardPower);
+      M5.Display.printf("PWM1: 0\n");
       break;
     case MODE_REVERSE:
       M5.Display.println("Reverse");
+      M5.Display.println("");
+      M5.Display.printf("Power: %d\n", reversePower);
+      M5.Display.println("");
+      M5.Display.printf("PWM0: 0\n");
+      M5.Display.printf("PWM1: %d\n", reversePower);
       break;
     case MODE_STOP:
       M5.Display.println("Stop");
+      M5.Display.println("");
+      M5.Display.println("Power: 0");
+      M5.Display.println("");
+      M5.Display.println("PWM0: 0");
+      M5.Display.println("PWM1: 0");
       break;
-  }
-  
-  M5.Display.println("");
-  M5.Display.printf("Power: %d\n", powerValue);
-  M5.Display.println("");
-  
-  if (currentMode != MODE_STOP) {
-    M5.Display.printf("PWM0: %d\n", (currentMode == MODE_FORWARD) ? powerValue : 0);
-    M5.Display.printf("PWM1: %d\n", (currentMode == MODE_REVERSE) ? powerValue : 0);
-  } else {
-    M5.Display.println("PWM0: 0");
-    M5.Display.println("PWM1: 0");
   }
   
   M5.Display.println("");
   M5.Display.setTextSize(1);
   M5.Display.println("A: -10  B: +10  C: Mode");
+  M5.Display.println("");
+  M5.Display.printf("Fwd:%d Rev:%d\n", forwardPower, reversePower);
 }
 
 void applyPWM() {
   switch(currentMode) {
     case MODE_FORWARD:
-      ledcWrite(PWM0_CH, powerValue);
+      ledcWrite(PWM0_CH, forwardPower);
       ledcWrite(PWM1_CH, 0);
+      Serial.printf("Forward: PWM0=%d\n", forwardPower);
       break;
     case MODE_REVERSE:
       ledcWrite(PWM0_CH, 0);
-      ledcWrite(PWM1_CH, powerValue);
+      ledcWrite(PWM1_CH, reversePower);
+      Serial.printf("Reverse: PWM1=%d\n", reversePower);
       break;
     case MODE_STOP:
       ledcWrite(PWM0_CH, 0);
       ledcWrite(PWM1_CH, 0);
+      Serial.println("Stop: All OFF");
       break;
   }
 }
@@ -75,6 +86,9 @@ void applyPWM() {
 void setup() {
   auto cfg = M5.config();
   M5.begin(cfg);
+  
+  Serial.begin(115200);
+  Serial.println("Hbridge Control with Mode Memory");
   
   // PWM初期化
   ledcSetup(PWM0_CH, PWM_FREQ, PWM_RES);
@@ -93,14 +107,22 @@ void loop() {
   
   // Button A: パワー -10
   if (M5.BtnA.wasPressed()) {
-    powerValue = max(0, powerValue - 10);
+    if (currentMode == MODE_FORWARD) {
+      forwardPower = max(0, forwardPower - 10);
+    } else if (currentMode == MODE_REVERSE) {
+      reversePower = max(0, reversePower - 10);
+    }
     applyPWM();
     updateDisplay();
   }
   
   // Button B: パワー +10
   if (M5.BtnB.wasPressed()) {
-    powerValue = min(255, powerValue + 10);
+    if (currentMode == MODE_FORWARD) {
+      forwardPower = min(255, forwardPower + 10);
+    } else if (currentMode == MODE_REVERSE) {
+      reversePower = min(255, reversePower + 10);
+    }
     applyPWM();
     updateDisplay();
   }
@@ -110,13 +132,15 @@ void loop() {
     switch(currentMode) {
       case MODE_FORWARD:
         currentMode = MODE_REVERSE;
+        Serial.println("Mode: Reverse");
         break;
       case MODE_REVERSE:
         currentMode = MODE_STOP;
-        powerValue = 0;  // Stopに切り替えたらパワーをリセット
+        Serial.println("Mode: Stop");
         break;
       case MODE_STOP:
         currentMode = MODE_FORWARD;
+        Serial.println("Mode: Forward");
         break;
     }
     applyPWM();
